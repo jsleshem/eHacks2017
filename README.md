@@ -1,2 +1,2 @@
 # eHacks2017
-Jack Leshem, Michael Greer, Daniel Pollak
+Jack Leshem, Matt Shepherd, Noah Luddy, Jay Vaidya
