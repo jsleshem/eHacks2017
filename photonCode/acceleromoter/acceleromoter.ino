@@ -49,10 +49,16 @@ void loop() {
   float accelVector = sqrt(sq(xAccel) + sq(yAccel) + sq(zAccel));
 
  if (accelVector < threshHold) {
+    lcd.clear();
+    lcd.setCursor(0,0);
     Serial.println("Still");
+    lcd.print("Still ");
   }
   else  {
+    lcd.clear();
+    lcd.setCursor(0,0);
     Serial.println("Moving");
+    lcd.print("Moving");
   }
  delay(100);
 }
