@@ -1,0 +1,11 @@
+Claim Particle:
+	particle serial wifi
+	particle setup
+
+Compile Particle Code:
+	particle compile <filepath>
+	
+Upload Compiled Particle Code:
+	particle list
+		[Get particle ID string from response code]
+	particle flash <particle ID> <filepath>
