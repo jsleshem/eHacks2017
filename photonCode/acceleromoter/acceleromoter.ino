@@ -10,7 +10,10 @@ Adafruit_MMA8451 mma = Adafruit_MMA8451();
 ST7036 lcd = ST7036 ( 2, 16, 0x7c );
 long previousMillis = 0;
 long interval = 100;
-int threshHold = 1.25;
+float threshHold = 1.05;
+float totalAccelOld = 0;
+long lastDebounceTime = 0;
+unsigned long debounceDelay = 50;
 
 void setup(void) {
    Serial.begin(115200);
@@ -39,17 +42,17 @@ void loop() {
   sensors_event_t event; 
   mma.getEvent(&event);
 
-
+  
   float xAccel = abs(event.acceleration.x);
   float yAccel = abs(event.acceleration.y);
   float zAccel= abs(event.acceleration.z);
-  float totalAccel = xAccel + yAccel + zAccel;
+  float accelVector = sqrt(sq(xAccel) + sq(yAccel) + sq(zAccel));
 
-  if (totalAccel > threshHold) {
-    Serial.println("moving");
+ if (accelVector < threshHold) {
+    Serial.println("Still");
   }
   else  {
-    Serial.println("Still");
+    Serial.println("Moving");
   }
  delay(100);
 }
