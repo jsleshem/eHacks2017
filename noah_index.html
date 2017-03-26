@@ -1,105 +1,176 @@
 <!doctype html>
 <html>
 
-    <head>
-        <style>
-            body {
-                margin: auto;
-                font-family: Lato, Calibri, Arial, sans-serif;
-                text-align: center;
-                background-color: lightgreen;
-            }
-            
-            h1 {
-                font-size: 40px;
-            }
-            
-            table, th, td {
-                border: 1px solid black;
-                border-collapse: collapse;
-            }
-            
-            table {
-                width: 100%;
-            }
-            
-            th, td {
-                padding: 15px;
-            }
-            
-        </style>
-    </head>
+<head>
+<style>
+body {
+  margin: auto;
+  font-family: Lato, Calibri, Arial, sans-serif;
+  text-align: center;
+  background-color: lightgreen;
+}
 
-    <body>
-        <h1>Scorecard</h1>
-        <table>
-            <tr>
-                <td><b>Name</b></td>
-                <td>1</td>
-                <td>2</td>
-                <td>3</td>
-                <td>4</td>
-                <td>5</td>
-                <td>6</td>
-                <td>7</td>
-                <td>8</td>
-                <td>9</td>
-                <td>10</td>
-                <td>11</td>
-                <td>12</td>
-                <td>13</td>
-                <td>14</td>
-                <td>15</td>
-                <td>16</td>
-                <td>17</td>
-                <td>18</td>
-                <td><b>Total</b></td>
-            </tr>
-            <tr>
-                <td id="p-1-name">Player 1</td>
-                <td id="p-1-1"></td>
-                <td id="p-1-2"></td>
-                <td id="p-1-3"></td>
-                <td id="p-1-4"></td>
-                <td id="p-1-5"></td>
-                <td id="p-1-6"></td>
-                <td id="p-1-7"></td>
-                <td id="p-1-8"></td>
-                <td id="p-1-9"></td>
-                <td id="p-1-10"></td>
-                <td id="p-1-11"></td>
-                <td id="p-1-12"></td>
-                <td id="p-1-13"></td>
-                <td id="p-1-14"></td>
-                <td id="p-1-15"></td>
-                <td id="p-1-16"></td>
-                <td id="p-1-17"></td>
-                <td id="p-1-18"></td>
-                <td id="p-1-total"></td>
-            </tr>
-            <tr>
-                <td id="p-2-name">Player 2</td>
-                <td id="p-2-1"></td>
-                <td id="p-2-2"></td>
-                <td id="p-2-3"></td>
-                <td id="p-2-4"></td>
-                <td id="p-2-5"></td>
-                <td id="p-2-6"></td>
-                <td id="p-2-7"></td>
-                <td id="p-2-8"></td>
-                <td id="p-2-9"></td>
-                <td id="p-2-10"></td>
-                <td id="p-2-11"></td>
-                <td id="p-2-12"></td>
-                <td id="p-2-13"></td>
-                <td id="p-2-14"></td>
-                <td id="p-2-15"></td>
-                <td id="p-2-16"></td>
-                <td id="p-2-17"></td>
-                <td id="p-2-18"></td>
-                <td id="p-2-total"></td>
-            </tr>
-        </table>
-    </body>
-    
+h1 {
+  font-size: 40px;
+}
+
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+
+table {
+  width: 100%;
+}
+
+th, td {
+  padding: 15px;
+}
+
+</style>
+<script src="/socket.io/socket.io.js"></script>
+<script
+src="https://code.jquery.com/jquery-1.12.4.min.js"
+integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ="
+crossorigin="anonymous"></script>
+<script type ="text/javascript">
+
+$(document).ready(function(){
+
+  var username = "";
+  var currentRoom = "";
+
+  var socketio = io.connect();
+  socketio.on("connect",function(data) {
+    username = prompt("Please enter a username: ")
+    socketio.emit('add_user', username);
+  });
+
+  socketio.on("update_rooms", function(data){
+    var dropdown = document.getElementById('room-list');
+    dropdown.innerHTML = "";
+    var nullOption = document.createElement('option');
+    nullOption.text = "-- Select Room --";
+    nullOption.value = -1;
+    dropdown.add(nullOption);
+    for (var i in data){
+      var option = document.createElement("option");
+      option.text = data[i].name;
+      option.value = i;
+      dropdown.add(option, -1);
+    }
+
+  });
+
+  socketio.on("room_created", function(data){
+    socketio.emit("join_room", data);
+  });
+
+  socketio.on('error_message', function(data){
+    alert(data + "! Please try again");
+  });
+
+  socketio.on('room-joined', function(data){
+    currentRoom = data;
+    console.log(data.admin);
+    console.log(username);
+    if (data.name == "Lobby"){
+      document.getElementById('room-name').innerHTML = "Welcome to the lobby! Join a room!";
+      document.getElementById('score-table').innerHTML = "";
+    } else {
+    document.getElementById('room-name').innerHTML = "Scorecard for game " + data.name;
+    if (data.admin == username){
+      var button = document.createElement('button');
+      button.setAttribute('id', 'start-game');
+      button.appendChild(document.createTextNode("Start Game"));
+      document.getElementById('start-game-div').append(button);
+      $('#start-game').click(function(){
+        console.log("Game start");
+        socketio.emit('start-game', currentRoom);
+      });
+    }
+  }
+  });
+
+  socketio.on('update_users', function(data){
+    data = data.users
+    var table = document.getElementById('score-table');
+    table.innerHTML = "";
+    var headerRow = table.insertRow(-1);
+    headerRow.insertCell(-1).innerHTML = "Hole";
+    for (var i in data){
+      headerRow.insertCell(-1).innerHTML = data[i];
+    }
+    for (var i = 0; i < 18; i++){
+      var row = table.insertRow(-1);
+      row.insertCell(-1).innerHTML = i+1;
+      for (var j = 0; j < data.length; j++){
+        var cell = row.insertCell(-1);
+        cell.setAttribute('id', 'p_' + data[j] + '_' + i);
+      }
+    }
+    var row = table.insertRow(-1);
+    row.insertCell(-1).innerHTML = "Total";
+    for (var i = 0; i < data.length; i++){
+      var cell = row.insertCell(-1);
+      cell.setAttribute('id', 'p_' + data[i] + '_t');
+    }
+  });
+  function sendMessage(){
+    var msg = document.getElementById("message_input").value;
+    socketio.emit("message_to_server", {message:msg});
+  }
+
+  $('#submit-room-select').click(function(){
+
+    var selected = $('#room-list').val();
+    if (selected > 0) {
+      var passcode = prompt("Please enter a 4-digit numeric passcode: ");
+      while (passcode.length != 4 || isNaN(passcode)){
+        passcode = prompt("Not Valid! Please enter a new 4-digit numeric passcode: ");
+      }
+      socketio.emit("join_room", {'room': selected, 'code': passcode});
+    } else if (selected == 0){
+      socketio.emit("join_room", {'room': selected, 'code': 0000});
+    }
+  })
+
+  $('#create-room-select').click(function(){
+    var name = prompt("Please enter a new room name: ", "");
+    if (name != null){
+      var passcode = prompt("Please enter a 4-digit numeric passcode: ", "");
+      while (passcode.length != 4 || isNaN(passcode)){
+        passcode = prompt("Not Valid! Please enter a new 4-digit numeric passcode: ");
+      }
+      console.log("Name: " + name + " Code: " + passcode);
+      socketio.emit("create_room", {'name': name, 'code': passcode});
+    }
+
+
+
+
+  });
+});
+</script>
+</head>
+
+<body>
+  <div id="room-select">
+    Rooms:
+    <select id="room-list">
+
+    </select>
+    <button id='submit-room-select'> Enter Room </button>
+    <button id='create-room-select'> Create New Room </button>
+  </div>
+  <div id='scorecard'>
+    <h1 id="room-name"> Scorecard for game </h1>
+    <div id='start-game-div'></div>
+    <table id='score-table'>
+
+
+    </table>
+  </div>
+</body>
+
 </html>
