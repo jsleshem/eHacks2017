@@ -29,9 +29,8 @@ var photonServer = http.createServer(photonApp).listen(photonApp.get('port'), fu
 var io = socketio.listen(server);
 
 var players = [{}];
-var chatrooms = [{name: "Lobby", admin: "server", number: 0, code: 0000, started: false}];
+var chatrooms = [{name: "Lobby", admin: "server", number: 0, code: 0000, started: false, currentPlayer: ""}];
 io.sockets.on("connection", function(socket){
-
 
 	socket.on('add_user', function(username){
 		socket.emit('update_rooms', chatrooms);
@@ -74,11 +73,12 @@ io.sockets.on("connection", function(socket){
 	});
 
 	socket.on('create_room', function(data){
-		var template = {name: "", admin: "", number: 0, started: false};
+		var template = {name: "", admin: "", number: 0, started: false, currentPlayer: ""}; // room template
 		template.name = data.name;
 		template.code = data.code;
 		template.number = chatrooms.length;
 		template.admin = socket.username;
+        template.currentPlayer = socket.username;
 		chatrooms.push(template);
 		players.push({});
 		io.sockets.emit('update_rooms', chatrooms);

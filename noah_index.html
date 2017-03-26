@@ -45,6 +45,20 @@ $(document).ready(function(){
     username = prompt("Please enter a username: ")
     socketio.emit('add_user', username);
   });
+    
+  socketio.on("start_turn", function(data) {  // data has current user
+    document.getElementById('whos-turn').innerHTML = "It is " + data.currentUser + "'s turn";
+    if (data.currentUser == username) {
+        var button = document.createElement('button');
+        button.setAttribute('id', 'end-turn');
+        button.appendChild(document.createTextNode("End Turn"));
+        document.getElementById('end-turn-div').append(button);
+        $('#end-turn').click(function(){
+            console.log("End Turn");
+            socketio.emit('start-turn');
+        });
+    }  
+  });
 
   socketio.on("update_rooms", function(data){
     var dropdown = document.getElementById('room-list');
@@ -59,7 +73,6 @@ $(document).ready(function(){
       option.value = i;
       dropdown.add(option, -1);
     }
-
   });
 
   socketio.on("room_created", function(data){
@@ -122,7 +135,6 @@ $(document).ready(function(){
   }
 
   $('#submit-room-select').click(function(){
-
     var selected = $('#room-list').val();
     if (selected > 0) {
       var passcode = prompt("Please enter a 4-digit numeric passcode: ");
@@ -145,10 +157,6 @@ $(document).ready(function(){
       console.log("Name: " + name + " Code: " + passcode);
       socketio.emit("create_room", {'name': name, 'code': passcode});
     }
-
-
-
-
   });
 });
 </script>
@@ -163,9 +171,11 @@ $(document).ready(function(){
     <button id='submit-room-select'> Enter Room </button>
     <button id='create-room-select'> Create New Room </button>
   </div>
+  <div id="whos-turn"></div>
   <div id='scorecard'>
     <h1 id="room-name"> Scorecard for game </h1>
     <div id='start-game-div'></div>
+    <div id='end-turn-div'></div>
     <table id='score-table'>
 
 
