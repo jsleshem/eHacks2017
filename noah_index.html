@@ -45,19 +45,20 @@ $(document).ready(function(){
     username = prompt("Please enter a username: ")
     socketio.emit('add_user', username);
   });
-    
-  socketio.on("start_turn", function(data) {  // data has current user
-    document.getElementById('whos-turn').innerHTML = "It is " + data.currentUser + "'s turn";
-    if (data.currentUser == username) {
+
+  socketio.on("start_turn", function(data) {
+    document.getElementById('whos-turn').innerHTML = "It is " + data + "'s turn";
+    if (data == username) {
         var button = document.createElement('button');
         button.setAttribute('id', 'end-turn');
         button.appendChild(document.createTextNode("End Turn"));
         document.getElementById('end-turn-div').append(button);
         $('#end-turn').click(function(){
+            document.getElementById('end-turn-div').innerHTML = "";
             console.log("End Turn");
-            socketio.emit('start-turn');
+            socketio.emit("end_turn", currentRoom);
         });
-    }  
+    }
   });
 
   socketio.on("update_rooms", function(data){
@@ -83,7 +84,7 @@ $(document).ready(function(){
     alert(data + "! Please try again");
   });
 
-  socketio.on('room-joined', function(data){
+  socketio.on('room_joined', function(data){
     currentRoom = data;
     console.log(data.admin);
     console.log(username);
@@ -98,8 +99,9 @@ $(document).ready(function(){
       button.appendChild(document.createTextNode("Start Game"));
       document.getElementById('start-game-div').append(button);
       $('#start-game').click(function(){
+        document.getElementById('start-game-div').innerHTML = "";
         console.log("Game start");
-        socketio.emit('start-game', currentRoom);
+        socketio.emit('start_game', currentRoom);
       });
     }
   }
@@ -117,18 +119,59 @@ $(document).ready(function(){
     for (var i = 0; i < 18; i++){
       var row = table.insertRow(-1);
       row.insertCell(-1).innerHTML = i+1;
-      for (var j = 0; j < data.length; j++){
+      for (var j in data){
         var cell = row.insertCell(-1);
         cell.setAttribute('id', 'p_' + data[j] + '_' + i);
+        cell.innerHTML = "0";
       }
     }
     var row = table.insertRow(-1);
     row.insertCell(-1).innerHTML = "Total";
+    row.setAttribute('id', 'total-row');
     for (var i = 0; i < data.length; i++){
       var cell = row.insertCell(-1);
       cell.setAttribute('id', 'p_' + data[i] + '_t');
+      cell.innerHTML = "0";
     }
   });
+
+  socketio.on('end_game', function (data) {
+    var totalCells = document.getElementById('total-row').cells;
+    var min = Number.MAX_SAFE_INTEGER;
+    var tie = false;
+    var index = 0;
+    for (var i=0; i < totalCells.length; i++){
+      console.log(i);
+      if (i != 0){
+        if (parseInt(totalCells[i]) == min){
+          tie = true;
+        } else if (parseInt(totalCells[i]) < min){
+          tie = false;
+          min = parseInt(totalCells[i]);
+          index = parseInt(i);
+        }
+      }
+    }
+    console.log("Data: " + data);
+    console.log("Index:" + index);
+    console.log(data[index]);
+    if (tie){
+      document.getElementById('whos-turn').innerHTML = "It's a tie!";
+    } else {
+    document.getElementById('whos-turn').innerHTML = data[index] + " wins!";
+  }
+  });
+
+  socketio.on('increase_score', function(data){
+      console.log(data.turn);
+      console.log(data.player);
+      console.log('p_' + data.player + '_' + (parseInt(data.turn) -1));
+      var cell = document.getElementById('p_' + data.player + '_' + (parseInt(data.turn) -1));
+      var cell_t = document.getElementById('p_' + data.player + "_t");
+      cell_t.innerHTML = parseInt(cell_t.innerHTML) + 1;
+      cell.innerHTML = parseInt(cell.innerHTML) + 1;
+  });
+
   function sendMessage(){
     var msg = document.getElementById("message_input").value;
     socketio.emit("message_to_server", {message:msg});
