@@ -38,7 +38,9 @@ var chatrooms = [{name: "Lobby", admin: "server", number: 0, code: 0000, started
 io.sockets.on("connection", function(socket){
 
 	eventEmitter.addListener("get_event", function(){
-		socket.emit("increase_score", {turn: chatrooms[socket.room.number].currentTurn, player: chatrooms[socket.room.number].currentPlayer});
+		if (socket.room.started){
+			socket.emit("increase_score", {turn: chatrooms[socket.room.number].currentTurn, player: chatrooms[socket.room.number].currentPlayer});
+		}
 	});
 
 	socket.on('add_user', function(username){
@@ -89,7 +91,7 @@ io.sockets.on("connection", function(socket){
 		template.code = data.code;
 		template.number = chatrooms.length;
 		template.admin = socket.username;
-    template.currentPlayer = socket.username;
+		template.currentPlayer = socket.username;
 		chatrooms.push(template);
 		players.push({});
 		io.sockets.emit('update_rooms', chatrooms);
@@ -110,11 +112,11 @@ io.sockets.on("connection", function(socket){
 		if (currentIndex+1 >= players_names.length){
 			if (chatrooms[socket.room.number].currentTurn == 18) {
 				io.sockets.in(data.name).emit("end_game", players_names);
-			} else {}
-			chatrooms[socket.room.number].currentTurn = parseInt(chatrooms[socket.room.number].currentTurn) + 1;
-			chatrooms[socket.room.number].currentPlayer = players_names[0];
-			io.sockets.in(data.name).emit("start_turn", players_names[0]);
-		}
+			} else {
+				chatrooms[socket.room.number].currentTurn = parseInt(chatrooms[socket.room.number].currentTurn) + 1;
+				chatrooms[socket.room.number].currentPlayer = players_names[0];
+				io.sockets.in(data.name).emit("start_turn", players_names[0]);
+			}
 		} else {
 			chatrooms[socket.room.number].currentPlayer = players_names[currentIndex+1];
 			io.sockets.in(data.name).emit("start_turn", players_names[currentIndex+1]);

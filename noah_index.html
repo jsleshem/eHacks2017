@@ -143,11 +143,11 @@ $(document).ready(function(){
     for (var i=0; i < totalCells.length; i++){
       console.log(i);
       if (i != 0){
-        if (parseInt(totalCells[i]) == min){
+        if (parseInt(totalCells[i].innerHTML) == min){
           tie = true;
-        } else if (parseInt(totalCells[i]) < min){
+        } else if (parseInt(totalCells[i].innerHTML) < min){
           tie = false;
-          min = parseInt(totalCells[i]);
+          min = parseInt(totalCells[i].innerHTML);
           index = parseInt(i);
         }
       }
@@ -158,7 +158,7 @@ $(document).ready(function(){
     if (tie){
       document.getElementById('whos-turn').innerHTML = "It's a tie!";
     } else {
-    document.getElementById('whos-turn').innerHTML = data[index] + " wins!";
+    document.getElementById('whos-turn').innerHTML = data[(index-1)] + " wins!";
   }
   });
 
