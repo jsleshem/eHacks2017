@@ -37,12 +37,6 @@ var players = [{}];
 var chatrooms = [{name: "Lobby", admin: "server", number: 0, code: 0000, started: false, currentPlayer: "", currentTurn: 0}];
 io.sockets.on("connection", function(socket){
 
-	eventEmitter.addListener("get_event", function(){
-		if (socket.room.started){
-			socket.emit("increase_score", {turn: chatrooms[socket.room.number].currentTurn, player: chatrooms[socket.room.number].currentPlayer});
-		}
-	});
-
 	socket.on('add_user', function(username){
 		socket.emit('update_rooms', chatrooms);
 		// we store the username in the socket session for this client
@@ -53,6 +47,12 @@ io.sockets.on("connection", function(socket){
 		players[0][username] = socket;
 		console.log(Object.keys(players[0]).length);
 		socket.emit('room_joined', socket.room);
+	});
+
+	eventEmitter.addListener("get_event", function(){
+		if (socket.room.started){
+			io.sockets.in(socket.room.name).emit("increase_score", {turn: chatrooms[socket.room.number].currentTurn, player: chatrooms[socket.room.number].currentPlayer});
+		}
 	});
 
 	socket.on('join_room', function(data){
